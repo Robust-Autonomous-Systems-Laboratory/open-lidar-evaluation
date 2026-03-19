@@ -1,0 +1,132 @@
+#define PCL_NO_PRECOMPILE
+
+#include <ros/ros.h>
+#include <sensor_msgs/PointCloud2.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl/pcl_macros.h>
+#include <pcl/common/common.h>
+#include <pcl/common/transforms.h>
+#include <pcl/filters/crop_box.h>
+#include <pcl/ModelCoefficients.h>
+#include <pcl/sample_consensus/method_types.h>
+#include <pcl/sample_consensus/model_types.h>
+#include <pcl/filters/extract_indices.h>
+#include <pcl/segmentation/sac_segmentation.h>
+#include <jsk_recognition_msgs/BoundingBox.h>
+
+ros::Publisher pub;
+ros::Publisher bbox_pub;
+//using PointT = pcl::PointXYZI;
+
+struct EIGEN_ALIGN16 OusterPointType
+{
+  PCL_ADD_POINT4D;
+  float intensity; //  std::uint16_t reflectivity; for ouster
+
+  PCL_MAKE_ALIGNED_OPERATOR_NEW;
+
+};
+
+POINT_CLOUD_REGISTER_POINT_STRUCT (OusterPointType,
+                                   (float, x, x)
+                                   (float, y, y)
+                                   (float, z, z)
+                                   (float, intensity, intensity)
+)
+
+
+void 
+cloud_cb (const sensor_msgs::PointCloud2ConstPtr& input)
+{
+  // Create a container for the data.
+  sensor_msgs::PointCloud2 output;
+  pcl::PointCloud<OusterPointType>::Ptr input_cloud(new pcl::PointCloud<OusterPointType>);
+  pcl::PointCloud<OusterPointType>::Ptr cloud_out(new pcl::PointCloud<OusterPointType>);
+
+
+  pcl::fromROSMsg(*input, *input_cloud);
+
+    pcl::CropBox<OusterPointType> cropBoxFilter;
+
+    float box_min_x = 24.5;
+    float box_min_y = -1.5;
+    float box_min_z = 0.28;
+
+    float box_max_x = 25.5;
+    float box_max_y = 1.5;
+    float box_max_z = 0.89;
+
+    Eigen::Vector4f min_pt (box_min_x, box_min_y, box_min_z, 1);
+    Eigen::Vector4f max_pt (box_max_x, box_max_y, box_max_z, 1);
+
+    // Cropbox slighlty bigger then bounding box of points
+    cropBoxFilter.setMin (min_pt);
+    cropBoxFilter.setMax (max_pt);
+
+    // Cloud
+    cropBoxFilter.setInputCloud (input_cloud);
+    cropBoxFilter.setNegative(false);
+    cropBoxFilter.filter (*cloud_out);
+
+    for (const auto& point : *cloud_out) {
+      std::cout << "Point coordinates: (" << point.x << ", " << point.y << ", " << point.z << ", " << point.intensity << ")" << std::endl;
+    } 
+
+
+    // convert from PCL PointCloud to ROS PointCloud2
+    pcl::toROSMsg(*cloud_out, output);
+    //would need to add frame ID and ROS time if integrating into live UGV system
+    pub.publish (output);
+
+
+
+  // publish the marker box visualization msg
+    jsk_recognition_msgs::BoundingBox bbox_msg;
+
+    bbox_msg.header.frame_id = "os_sensor"; // Replace with your desired frame
+    bbox_msg.header.stamp = ros::Time::now();
+
+    // pose
+    bbox_msg.pose.position.x = (box_min_x + box_max_x)/2;
+    bbox_msg.pose.position.y = (box_min_y + box_max_y)/2;
+    bbox_msg.pose.position.z = (box_min_z + box_max_z)/2;
+    bbox_msg.pose.orientation.x = 0.0;
+    bbox_msg.pose.orientation.y = 0.0;
+    bbox_msg.pose.orientation.z = 0.0;
+    bbox_msg.pose.orientation.w = 1.0;
+
+    // dims
+    bbox_msg.dimensions.x = (box_max_x - box_min_x); // Length
+    bbox_msg.dimensions.y = (box_max_y - box_min_y); // Width
+    bbox_msg.dimensions.z = (box_max_z - box_min_z); // Height
+
+    // labels
+    bbox_msg.value = 1.0;
+    bbox_msg.label = 0;
+
+    // Publish the marker
+    bbox_pub.publish(bbox_msg);
+
+}
+
+
+int
+main (int argc, char** argv)
+{
+  // Initialize ROS
+  ros::init (argc, argv, "box_node");
+  ros::NodeHandle nh;
+
+  // Create a ROS subscriber for the input point cloud
+  ros::Subscriber sub = nh.subscribe ("/velodyne_points", 1, cloud_cb); //pcl_combined_layer OR rslidar_points
+
+  // Create a ROS publisher for the output point cloud
+  pub = nh.advertise<sensor_msgs::PointCloud2> ("/box_cropped_points", 1);
+  bbox_pub = nh.advertise<jsk_recognition_msgs::BoundingBox>("box_filter_dimensions", 1);
+
+
+  // Spin
+  ros::spin ();
+}

@@ -1,0 +1,29 @@
+<launch>
+
+  <arg name="filename" default="default" />
+  <arg name="filepath" default="data/ruby/" />
+  <arg name="min_z" default="0" />
+
+  <node pkg="repeatability_processing" type="pcl_box_filter" name="box_node">
+    <param name="input_topic" type="string" value="/rslidar_points" /> 
+    <param name="frame" type="string" value="rslidar" />
+    <param name="box_min_x" type="double" value="0" />
+    <param name="box_max_x" type="double" value="25.5" />
+    <param name="box_min_y" type="double" value="-2.0" />
+    <param name="box_max_y" type="double" value="2.0" />
+    <param name="box_min_z" type="double" value="$(arg min_z)" />
+    <param name="box_max_z" type="double" value="5.0" />
+  </node>
+
+  <node pkg="repeatability_processing" type="target_processor.py" name="target_point_saver" output="screen">
+    <param name="filename_param" type="string" value="$(arg filename).csv"/>
+    <param name="filepath_param" type="string" value="$(arg filepath)"/>
+  </node>
+
+  <!-- <node pkg="rqt_reconfigure" type="rqt_reconfigure" name="rqt_reconfigure" output="screen"/> -->
+  <node pkg="rviz" type="rviz" name="rviz_repeatability" required="true" args="-d $(find repeatability_processing)/rviz/ruby.rviz"/> 
+
+  <include file="$(find rslidar_sdk)/launch/start.launch" />
+  <node pkg="rosbag" type="record" name="bag_record_all" args="-a -O $(find repeatability_processing)/$(arg filepath)/$(arg filename).bag" output="screen"/> 
+
+</launch>

@@ -1,0 +1,17 @@
+<launch>
+
+  <node pkg="repeatability_processing" type="dynamic_param_box_filter" name="tuning_node">
+    <param name="input_topic" type="string" value="/ouster/points" /> 
+    <param name="frame" type="string" value="os_sensor" />
+  </node>
+
+  <node pkg="rqt_reconfigure" type="rqt_reconfigure" name="rqt_reconfigure" output="screen"/>
+  <node pkg="rviz" type="rviz" name="rviz_repeatability" required="true" args="-d $(find repeatability_processing)/rviz/ouster.rviz"/> 
+
+  <include file="$(find ouster_ros)/launch/sensor.launch">
+    <arg name="sensor_hostname" value="192.168.115.55"/>
+    <arg name="lidar_mode" value="1024x10" />  <!-- 512x10, 512x20, 1024x10(default), 1024x20, 2048x10 -->
+  </include>
+
+
+</launch>

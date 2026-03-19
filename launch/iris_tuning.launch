@@ -1,0 +1,11 @@
+<launch>
+
+  <node pkg="repeatability_processing" type="dynamic_param_box_filter" name="tuning_node">
+    <param name="input_topic" type="string" value="/pcl_combined_layer" /> 
+    <param name="frame" type="string" value="iris_interface_node" /> 
+  </node>
+
+  <node pkg="rqt_reconfigure" type="rqt_reconfigure" name="rqt_reconfigure" output="screen"/> 
+  <node pkg="rviz" type="rviz" name="rviz_repeatability" required="true" args="-d $(find repeatability_processing)/rviz/iris.rviz"/>
+
+</launch>
