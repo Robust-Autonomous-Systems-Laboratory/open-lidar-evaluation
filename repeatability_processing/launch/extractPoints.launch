@@ -1,0 +1,29 @@
+<launch>
+
+  <!-- Change lidar PC2 topic and expected frame for each DUT-->
+  <arg name="lidar_pc2_topic" default="/velodyne_points" />
+  <arg name="lidar_frame" default="velodyne" />
+
+  <!-- Change the filename and path for each new test iteration (lidar, range, experiment, etc.) -->
+  <arg name="filename" default="date_location_lidar_distance_test.csv" />
+  <arg name="filepath" default="data/experiment/lidarA/distance1" />
+
+  <!-- Creates PCL box filtering object to only publish points within the 3D control volume-->
+  <node pkg="repeatability_processing" type="pcl_box_filter" name="box_node">
+    <param name="input_topic" type="string" value="$(arg lidar_pc2_topic)" /> 
+    <param name="frame" type="string" value="$(arg lidar_frame)" /> 
+    <param name="box_min_x" type="double" value="0" />
+    <param name="box_max_x" type="double" value="50.5" />
+    <param name="box_min_y" type="double" value="-2.0" />
+    <param name="box_max_y" type="double" value="2.0" />
+    <param name="box_min_z" type="double" value="1.0" />
+    <param name="box_max_z" type="double" value="2.0" />
+  </node>
+  
+  <!-- Calculates and saves ranges from all points in 3D control volume from the PCL box filter to CSV filename in filepath -->
+  <node pkg="repeatability_processing" type="target_processor.py" name="target_point_saver" output="screen">
+    <param name="~filename_param" type="string" value="$(arg filename)"/>
+    <param name="~filepath_param" type="string" value="$(arg filepath)"/>
+  </node>
+
+</launch>
