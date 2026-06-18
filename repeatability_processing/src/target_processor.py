@@ -20,8 +20,9 @@ class ProcessingNode:
             rospy.logwarn("Parameter failed to load")
 
         rospack = rospkg.RosPack()
-        self.package_path = rospack.get_path('repeatability_processing')
-        self.csv_file = os.path.join(self.package_path, path, name)
+        package_path = rospack.get_path('repeatability_processing')
+        self.data_path = os.path.join(package_path, path)
+        self.csv_file = os.path.join(self.data_path, name)
 
     def callback(self, msg):
         # Convert the PointCloud2 message to a NumPy array
@@ -37,8 +38,8 @@ class ProcessingNode:
 
             print(f"X: {x:.4f}  Y: {y:.4f}  Z: {z:.4f}  Range: {range:.4f}")
 
-        if self.package_path:
-            os.makedirs(self.package_path, exist_ok=True)
+        if self.data_path:
+            os.makedirs(self.data_path, exist_ok=True)
 
         if ranges:
             with open(self.csv_file, 'a', newline='') as csvfile:
