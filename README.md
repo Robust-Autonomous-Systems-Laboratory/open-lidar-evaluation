@@ -88,7 +88,10 @@ $ python3 processing.py
 
 ## Publication
 
-This work is featured in "Assessing the Effect of Inclement Winter Weather on Automotive Lidars: Experimental Design" and was submitted to the 2026 IEEE International Workshop on Metrology for Automotive (MetroAutomotive).
+This work is featured in "Assessing the Effect of Inclement Winter Weather on Automotive Lidars: Experimental Design" and was presented at the 2026 IEEE International Workshop on Metrology for Automotive (MetroAutomotive). The paper is available on [IEEE Xplore](https://ieeexplore.ieee.org/abstract/document/11644655) with the following citation:
+```
+I. Q. Mattson and J. P. Bos, "Assessing the Effect of Inclement Winter Weather on Automotive Lidars: Experimental Design," 2026 IEEE International Workshop on Metrology for Automotive (MetroAutomotive), Brescia, Italy, 2026, pp. 150-155, doi: 10.1109/MetroAutomotive69354.2026.11644655.
+```
 
 ## Acknowledgements
 
